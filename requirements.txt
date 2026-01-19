@@ -4,4 +4,3 @@ pyrogram==2.0.106
 streamlit==1.29.0
 pandas==2.1.4
 python-dotenv==1.0.0
-sqlite3
