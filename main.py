@@ -1,13 +1,18 @@
 #!/usr/bin/env python3
 """
-Telegram AutoPosting - Упрощенная версия для теста
+Telegram AutoPosting - Версия для Railway
 """
 
 import sys
 import os
 import logging
+import threading
+import time
 
-logging.basicConfig(level=logging.INFO)
+# Для Railway: добавляем корневую директорию в путь
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+
+logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 logger = logging.getLogger(__name__)
 
 def check_dependencies():
@@ -21,13 +26,12 @@ def check_dependencies():
         try:
             __import__(package)
             print(f"✅ {package}")
-        except ImportError:
+        except ImportError as e:
             missing.append(package)
-            print(f"❌ {package}")
+            print(f"❌ {package}: {e}")
     
     if missing:
         print(f"\n⚠️ Отсутствуют: {', '.join(missing)}")
-        print("Установите: pip install fastapi uvicorn sqlalchemy pyrogram streamlit PyQt6")
         return False
     
     print("\n✅ Все зависимости установлены")
@@ -38,199 +42,64 @@ def init_system():
     print("\n🗄️ Инициализация базы данных...")
     
     try:
-        # Инициализируем базу данных
-        from src.database.database import init_database
-        db_manager = init_database()
+        # Создаем директорию для данных
+        os.makedirs("data", exist_ok=True)
+        
+        # Простая инициализация БД для Railway
+        import sqlite3
+        conn = sqlite3.connect('data/database.db')
+        cursor = conn.cursor()
+        
+        # Создаем таблицы
+        cursor.execute('''
+            CREATE TABLE IF NOT EXISTS users (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                username TEXT UNIQUE,
+                password TEXT,
+                phone TEXT,
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+            )
+        ''')
+        
+        cursor.execute('''
+            CREATE TABLE IF NOT EXISTS campaigns (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                name TEXT,
+                message TEXT,
+                status TEXT DEFAULT 'pending',
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+            )
+        ''')
+        
+        # Добавляем админа по умолчанию
+        cursor.execute('''
+            INSERT OR IGNORE INTO users (username, password, phone) 
+            VALUES (?, ?, ?)
+        ''', ('admin', 'admin123', '+79991234567'))
+        
+        conn.commit()
+        conn.close()
         
         print("✅ База данных инициализирована")
         print("📍 Админ для входа: admin / admin123")
         
-        return db_manager
+        return True
         
     except Exception as e:
         print(f"❌ Ошибка инициализации: {e}")
         import traceback
         traceback.print_exc()
-        return None
+        return False
 
-def main_menu():
-    """Главное меню"""
-    print("\n" + "=" * 50)
-    print("🤖 TELEGRAM AUTOPOSTING - ГЛАВНОЕ МЕНЮ")
-    print("=" * 50)
+def create_basic_api():
+    """Создать базовый API для Railway"""
+    print("\n📝 Создание API...")
     
-    print("\n1. Запустить систему (режим разработки)")
-    print("2. Проверить Telegram API")
-    print("3. Выход")
-    
-    while True:
-        choice = input("\nВыберите вариант (1-3): ").strip()
-        
-        if choice == "1":
-            run_development_mode()
-            break
-        elif choice == "2":
-            test_telegram_api()
-            break
-        elif choice == "3":
-            print("👋 До свидания!")
-            sys.exit(0)
-        else:
-            print("❌ Неверный выбор")
-
-def run_development_mode():
-    """Запустить в режиме разработки"""
-    print("\n🔧 Запуск в режиме разработки...")
-    
-    try:
-        # Сначала проверим, есть ли необходимые файлы
-        if not os.path.exists("src/api/server.py"):
-            print("❌ Файл src/api/server.py не найден")
-            print("Создайте базовый файл API")
-            create_basic_api_file()
-        
-        print("1. Запуск API сервера...")
-        import subprocess
-        import threading
-        import time
-        
-        # Запуск сервера в отдельном потоке
-        def run_server():
-            try:
-                # ИСПРАВЛЕНО: запуск через python -m
-                os.system("python -m uvicorn src.api.server:app --host 127.0.0.1 --port 5000 --reload")
-            except Exception as e:
-                print(f"❌ Ошибка сервера: {e}")
-        
-        server_thread = threading.Thread(target=run_server, daemon=True)
-        server_thread.start()
-        time.sleep(3)
-        
-        # Проверяем админ-панель
-        if os.path.exists("src/admin_panel/admin.py"):
-            print("2. Запуск админ-панели...")
-            admin_thread = threading.Thread(
-                target=lambda: os.system("python -m streamlit run src/admin_panel/admin.py"),  # ИСПРАВЛЕНО
-                daemon=True
-            )
-            admin_thread.start()
-            time.sleep(2)
-        else:
-            print("⚠️ Админ-панель не найдена (src/admin_panel/admin.py)")
-            print("📝 Создание базовой админ-панели...")
-            create_basic_admin_panel()
-            time.sleep(1)
-            admin_thread = threading.Thread(
-                target=lambda: os.system("python -m streamlit run src/admin_panel/admin.py"),  # ИСПРАВЛЕНО
-                daemon=True
-            )
-            admin_thread.start()
-            time.sleep(2)
-        
-        print("3. Проверка системы...")
-        print("\n📢 Система запущена:")
-        print("- API сервер: http://localhost:5000")
-        print("- Админ-панель: http://localhost:8501")
-        print("- Документация API: http://localhost:5000/docs")
-        print("\n⏹️ Для остановки нажмите Ctrl+C два раза")
-        
-        # Ждем
-        while True:
-            time.sleep(1)
-            
-    except KeyboardInterrupt:
-        print("\n\n🛑 Система остановлена")
-    except Exception as e:
-        print(f"❌ Ошибка: {e}")
-        import traceback
-        traceback.print_exc()
-
-def test_telegram_api():
-    """Тест Telegram API"""
-    print("\n📱 Тест Telegram API...")
-    
-    try:
-        # Проверяем наличие .env файла
-        if not os.path.exists(".env"):
-            print("❌ Файл .env не найден")
-            print("Создайте файл .env с API_ID, API_HASH, PHONE")
-            return
-        
-        from dotenv import load_dotenv
-        load_dotenv()
-        
-        API_ID = os.getenv("API_ID")
-        API_HASH = os.getenv("API_HASH")
-        
-        if not API_ID or not API_HASH:
-            print("❌ API_ID или API_HASH не найдены в .env")
-            return
-        
-        print(f"✅ API ID: {API_ID}")
-        print(f"✅ API Hash: {API_HASH[:10]}...")
-        
-        # Простой тест Pyrogram с существующей сессией
-        from pyrogram import Client
-        
-        print("\n🔄 Подключение к Telegram...")
-        
-        # Используем существующую сессию
-        if os.path.exists("telegram_session.session"):
-            print("📁 Используем сохраненную сессию...")
-            client = Client("telegram_session")
-        else:
-            print("⚠️ Сессия не найдена, создаем новую...")
-            PHONE = os.getenv("PHONE")
-            if not PHONE:
-                print("❌ PHONE не найден в .env")
-                return
-            
-            client = Client(
-                name="telegram_session",
-                api_id=int(API_ID),
-                api_hash=API_HASH,
-                phone_number=PHONE
-            )
-        
-        async def test_connection():
-            await client.connect()
-            me = await client.get_me()
-            await client.disconnect()
-            return me
-        
-        import asyncio
-        me = asyncio.run(test_connection())
-        
-        if me:
-            print(f"✅ Подключение успешно!")
-            print(f"👤 Пользователь: {me.first_name or 'Не указано'}")
-            print(f"📱 Телефон: {me.phone_number}")
-            print(f"🆔 ID: {me.id}")
-            print("\n🎉 Telegram API работает корректно!")
-        else:
-            print("❌ Не удалось подключиться")
-            
-    except Exception as e:
-        print(f"❌ Ошибка Telegram API: {e}")
-        import traceback
-        traceback.print_exc()
-
-def create_basic_api_file():
-    """Создать базовый API файл"""
-    print("\n📝 Создание базового API файла...")
-    
-    api_content = '''from fastapi import FastAPI, HTTPException
+    api_content = '''from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-import uvicorn
-import logging
-
-# Настройка логирования
-logging.basicConfig(level=logging.INFO)
-logger = logging.getLogger(__name__)
 
 app = FastAPI(title="Telegram AutoPosting API")
 
-# Настройка CORS
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
@@ -240,31 +109,40 @@ app.add_middleware(
 )
 
 @app.get("/")
-async def root():
+def root():
     return {
-        "message": "Telegram AutoPosting API",
+        "service": "Telegram AutoPosting",
+        "status": "running",
         "version": "1.0.0",
-        "endpoints": {
-            "health": "/api/health",
-            "docs": "/docs",
-            "redoc": "/redoc"
+        "endpoints": ["/", "/health", "/docs"]
+    }
+
+@app.get("/health")
+def health():
+    return {"status": "healthy", "timestamp": "2024-01-01T00:00:00Z"}
+
+@app.get("/api/status")
+def status():
+    import sqlite3
+    import os
+    
+    try:
+        conn = sqlite3.connect('data/database.db')
+        cursor = conn.cursor()
+        cursor.execute("SELECT COUNT(*) FROM users")
+        user_count = cursor.fetchone()[0]
+        cursor.execute("SELECT COUNT(*) FROM campaigns")
+        campaign_count = cursor.fetchone()[0]
+        conn.close()
+        
+        return {
+            "users": user_count,
+            "campaigns": campaign_count,
+            "database": "ok",
+            "uptime": "0"
         }
-    }
-
-@app.get("/api/health")
-async def health_check():
-    return {
-        "status": "ok", 
-        "service": "telegram-autoposting",
-        "timestamp": "2024-01-01T00:00:00Z"
-    }
-
-@app.get("/api/test")
-async def test_endpoint():
-    return {"message": "API работает корректно"}
-
-if __name__ == "__main__":
-    uvicorn.run(app, host="127.0.0.1", port=5000, reload=True)
+    except Exception as e:
+        return {"error": str(e)}
 '''
     
     os.makedirs("src/api", exist_ok=True)
@@ -272,13 +150,50 @@ if __name__ == "__main__":
     with open("src/api/server.py", "w", encoding="utf-8") as f:
         f.write(api_content)
     
-    print("✅ Базовый API файл создан: src/api/server.py")
+    print("✅ API создан: src/api/server.py")
+
+def start_api_server():
+    """Запустить API сервер"""
+    try:
+        print("🚀 Запуск API сервера...")
+        import uvicorn
+        
+        # Проверяем порт Railway
+        port = int(os.getenv("PORT", 8000))
+        
+        uvicorn.run(
+            "src.api.server:app",
+            host="0.0.0.0",
+            port=port,
+            log_level="info"
+        )
+    except Exception as e:
+        print(f"❌ Ошибка API сервера: {e}")
+
+def start_admin_panel():
+    """Запустить админ-панель"""
+    try:
+        print("👨‍💼 Запуск админ-панели...")
+        
+        # Создаем базовую админ-панель если нет
+        if not os.path.exists("src/admin_panel/admin.py"):
+            create_basic_admin_panel()
+        
+        import streamlit.web.bootstrap
+        from streamlit.web.cli import _main_run
+        
+        # Запускаем Streamlit в отдельном процессе
+        sys.argv = ["streamlit", "run", "src/admin_panel/admin.py", "--server.port=8501", "--server.address=0.0.0.0"]
+        _main_run()
+    except Exception as e:
+        print(f"❌ Ошибка админ-панели: {e}")
 
 def create_basic_admin_panel():
     """Создать базовую админ-панель"""
-    print("\n📝 Создание базовой админ-панели...")
+    print("📝 Создание админ-панели...")
     
     admin_content = '''import streamlit as st
+import sqlite3
 import pandas as pd
 import time
 
@@ -288,106 +203,100 @@ st.set_page_config(
     layout="wide"
 )
 
-# Заголовок
-st.title("🤖 Telegram AutoPosting Admin Panel")
-st.markdown("---")
+st.title("🤖 Telegram AutoPosting Admin")
 
 # Боковая панель
 with st.sidebar:
     st.header("Навигация")
-    menu_option = st.selectbox(
-        "Выберите раздел:",
-        ["📊 Дашборд", "👥 Пользователи", "📢 Рассылка", "⚙️ Настройки"]
-    )
+    page = st.selectbox("Выберите страницу:", ["📊 Дашборд", "👥 Пользователи", "📢 Рассылки"])
     
     st.markdown("---")
-    st.info("Система управления автоматической рассылкой в Telegram")
+    st.button("🔄 Обновить данные")
+    
+    if st.button("🚪 Выход"):
+        st.rerun()
 
-# Основной контент
-if menu_option == "📊 Дашборд":
-    st.header("📊 Дашборд системы")
+if page == "📊 Дашборд":
+    st.header("📊 Дашборд")
     
-    col1, col2, col3 = st.columns(3)
-    
-    with col1:
-        st.metric("👥 Пользователи", "125", "+12")
-    
-    with col2:
-        st.metric("📢 Рассылки", "47", "+3")
-    
-    with col3:
-        st.metric("✅ Успешно", "98%", "+2%")
-    
-    # Пример данных
-    data = pd.DataFrame({
-        'Дата': pd.date_range(start='2024-01-01', periods=10, freq='D'),
-        'Отправлено': [10, 15, 12, 18, 20, 22, 19, 25, 30, 28],
-        'Доставлено': [9, 14, 11, 17, 19, 21, 18, 24, 29, 27]
-    })
-    
-    st.line_chart(data.set_index('Дата'))
-
-elif menu_option == "👥 Пользователи":
-    st.header("👥 Управление пользователями")
-    
-    # Таблица пользователей
-    users_data = pd.DataFrame({
-        'ID': [1, 2, 3, 4, 5],
-        'Имя': ['Алексей', 'Мария', 'Иван', 'Ольга', 'Дмитрий'],
-        'Телефон': ['+79991234567', '+79997654321', '+79995556677', '+79998887766', '+79993334455'],
-        'Статус': ['Активен', 'Активен', 'Неактивен', 'Активен', 'Тестовый'],
-        'Дата регистрации': ['2024-01-01', '2024-01-02', '2024-01-03', '2024-01-04', '2024-01-05']
-    })
-    
-    st.dataframe(users_data, use_container_width=True)
-
-elif menu_option == "📢 Рассылка":
-    st.header("📢 Управление рассылками")
-    
-    # Форма создания рассылки
-    with st.form("new_campaign"):
-        st.subheader("Создать новую рассылку")
+    # Подключаемся к БД
+    try:
+        conn = sqlite3.connect('data/database.db')
         
-        campaign_name = st.text_input("Название рассылки")
-        message_text = st.text_area("Текст сообщения", height=150)
-        target_group = st.multiselect("Целевая группа", ["Все пользователи", "Активные", "Тестовые"])
-        send_time = st.time_input("Время отправки")
-        
-        submitted = st.form_submit_button("Создать рассылку")
-        
-        if submitted:
-            if campaign_name and message_text:
-                st.success(f"Рассылка '{campaign_name}' создана!")
-                st.info(f"Отправка в {send_time} для {len(target_group)} групп")
-            else:
-                st.error("Заполните все обязательные поля")
-
-elif menu_option == "⚙️ Настройки":
-    st.header("⚙️ Настройки системы")
-    
-    with st.form("settings_form"):
-        st.subheader("Основные настройки")
-        
-        api_id = st.text_input("API ID", value="36543854")
-        api_hash = st.text_input("API Hash", value="bf8037bc98...", type="password")
+        # Статистика
+        users_count = pd.read_sql("SELECT COUNT(*) as count FROM users", conn)['count'][0]
+        campaigns_count = pd.read_sql("SELECT COUNT(*) as count FROM campaigns", conn)['count'][0]
         
         col1, col2 = st.columns(2)
         with col1:
-            max_users = st.number_input("Макс. пользователей", min_value=1, value=1000)
+            st.metric("👥 Пользователи", users_count)
         with col2:
-            messages_per_day = st.number_input("Сообщений в день", min_value=1, value=100)
+            st.metric("📢 Рассылки", campaigns_count)
         
-        auto_backup = st.checkbox("Автоматическое резервное копирование", value=True)
+        # Последние пользователи
+        st.subheader("Последние пользователи")
+        users_df = pd.read_sql("SELECT id, username, phone, created_at FROM users ORDER BY id DESC LIMIT 10", conn)
+        st.dataframe(users_df)
         
-        saved = st.form_submit_button("Сохранить настройки")
-        if saved:
-            st.success("Настройки сохранены!")
-            
-            # Имитация сохранения
-            with st.spinner("Сохранение..."):
-                time.sleep(1)
+        conn.close()
+    except Exception as e:
+        st.error(f"Ошибка БД: {e}")
 
-# Статус внизу
+elif page == "👥 Пользователи":
+    st.header("👥 Управление пользователями")
+    
+    # Добавить пользователя
+    with st.form("add_user"):
+        st.subheader("Добавить пользователя")
+        username = st.text_input("Имя пользователя")
+        phone = st.text_input("Телефон")
+        
+        if st.form_submit_button("Добавить"):
+            if username and phone:
+                try:
+                    conn = sqlite3.connect('data/database.db')
+                    cursor = conn.cursor()
+                    cursor.execute(
+                        "INSERT INTO users (username, phone) VALUES (?, ?)",
+                        (username, phone)
+                    )
+                    conn.commit()
+                    conn.close()
+                    st.success(f"Пользователь {username} добавлен!")
+                    time.sleep(1)
+                    st.rerun()
+                except Exception as e:
+                    st.error(f"Ошибка: {e}")
+            else:
+                st.error("Заполните все поля")
+
+elif page == "📢 Рассылки":
+    st.header("📢 Управление рассылками")
+    
+    with st.form("add_campaign"):
+        st.subheader("Создать рассылку")
+        name = st.text_input("Название рассылки")
+        message = st.text_area("Текст сообщения", height=100)
+        
+        if st.form_submit_button("Создать"):
+            if name and message:
+                try:
+                    conn = sqlite3.connect('data/database.db')
+                    cursor = conn.cursor()
+                    cursor.execute(
+                        "INSERT INTO campaigns (name, message) VALUES (?, ?)",
+                        (name, message)
+                    )
+                    conn.commit()
+                    conn.close()
+                    st.success(f"Рассылка '{name}' создана!")
+                    time.sleep(1)
+                    st.rerun()
+                except Exception as e:
+                    st.error(f"Ошибка: {e}")
+            else:
+                st.error("Заполните все поля")
+
 st.markdown("---")
 st.caption(f"Telegram AutoPosting v1.0.0 | {time.strftime('%Y-%m-%d %H:%M:%S')}")
 '''
@@ -397,35 +306,89 @@ st.caption(f"Telegram AutoPosting v1.0.0 | {time.strftime('%Y-%m-%d %H:%M:%S')}"
     with open("src/admin_panel/admin.py", "w", encoding="utf-8") as f:
         f.write(admin_content)
     
-    print("✅ Базовая админ-панель создана: src/admin_panel/admin.py")
+    print("✅ Админ-панель создана")
+
+def railway_start():
+    """Старт на Railway"""
+    print("=" * 60)
+    print("🚀 TELEGRAM AUTOPOSTING - RAILWAY EDITION")
+    print("=" * 60)
+    
+    # Проверяем зависимости
+    if not check_dependencies():
+        print("\n❌ Зависимости не установлены")
+        return
+    
+    # Инициализируем систему
+    if not init_system():
+        print("\n❌ Ошибка инициализации")
+        return
+    
+    # Создаем API если нет
+    if not os.path.exists("src/api/server.py"):
+        create_basic_api()
+    
+    print("\n🔄 Запуск сервисов...")
+    
+    # Запускаем API сервер в отдельном потоке
+    api_thread = threading.Thread(target=start_api_server, daemon=True)
+    api_thread.start()
+    
+    # Ждем запуска API
+    time.sleep(2)
+    
+    # Запускаем админ-панель в отдельном потоке
+    admin_thread = threading.Thread(target=start_admin_panel, daemon=True)
+    admin_thread.start()
+    
+    print("\n✅ Система запущена!")
+    print(f"🌐 API: http://0.0.0.0:{os.getenv('PORT', 8000)}")
+    print("📊 Админ-панель: http://0.0.0.0:8501")
+    print("\n📝 Логи в реальном времени...")
+    
+    # Держим главный поток активным
+    try:
+        while True:
+            time.sleep(1)
+    except KeyboardInterrupt:
+        print("\n🛑 Остановка системы...")
 
 def main():
-    """Главная функция"""
+    """Главная функция для локального запуска"""
     print("=" * 50)
     print("🤖 TELEGRAM AUTOPOSTING SYSTEM")
     print("=" * 50)
     
-    # Проверяем зависимости
     if not check_dependencies():
         return
     
-    # Инициализируем систему
-    db_manager = init_system()
-    if not db_manager:
+    if not init_system():
         return
     
-    # Показываем меню
-    while True:
-        main_menu()
-        print("\n" + "=" * 50)
-        print("Возврат в главное меню...")
-        print("=" * 50)
+    print("\n1. Запустить на Railway")
+    print("2. Проверить Telegram API")
+    print("3. Выход")
+    
+    choice = input("\nВыберите вариант: ").strip()
+    
+    if choice == "1":
+        railway_start()
+    elif choice == "2":
+        print("Тест Telegram API...")
+        # Здесь можно добавить тест
+    elif choice == "3":
+        print("👋 До свидания!")
+        sys.exit(0)
 
 if __name__ == "__main__":
     try:
-        main()
+        # Если запускаем на Railway
+        if os.getenv("RAILWAY_ENVIRONMENT") or os.getenv("RAILWAY_PROJECT_NAME"):
+            railway_start()
+        else:
+            main()
     except KeyboardInterrupt:
-        print("\n\n👋 Программа завершена")
+        print("\n👋 Программа завершена")
     except Exception as e:
         print(f"\n❌ Критическая ошибка: {e}")
         import traceback
