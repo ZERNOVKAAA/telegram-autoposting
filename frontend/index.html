@@ -1,0 +1,198 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Telegram AutoPosting System</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        .gradient-bg {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        }
+        .card-hover {
+            transition: transform 0.3s, box-shadow 0.3s;
+        }
+        .card-hover:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+        }
+        .loader {
+            border: 3px solid #f3f3f3;
+            border-top: 3px solid #667eea;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body class="bg-gray-50">
+    <!-- Навигация -->
+    <nav class="bg-white shadow-lg">
+        <div class="container mx-auto px-4">
+            <div class="flex justify-between items-center py-4">
+                <div class="flex items-center">
+                    <i class="fab fa-telegram text-blue-500 text-2xl mr-2"></i>
+                    <span class="text-xl font-bold text-gray-800">Telegram AutoPosting</span>
+                </div>
+                <div class="flex space-x-4" id="nav-buttons">
+                    <!-- Кнопки появятся после загрузки JS -->
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Hero секция -->
+    <header class="gradient-bg text-white">
+        <div class="container mx-auto px-4 py-20">
+            <div class="text-center">
+                <h1 class="text-4xl md:text-5xl font-bold mb-6">
+                    Автоматизируйте публикации в Telegram
+                </h1>
+                <p class="text-xl mb-8 max-w-2xl mx-auto">
+                    Создавайте сценарии, настраивайте расписание и запускайте автоматические рассылки в Telegram каналах и группах
+                </p>
+                <div class="flex flex-col sm:flex-row justify-center gap-4">
+                    <a href="#features" class="bg-white text-purple-600 px-6 py-3 rounded-lg font-semibold hover:bg-gray-100 transition">
+                        <i class="fas fa-rocket mr-2"></i>Начать бесплатно
+                    </a>
+                    <a href="#demo" class="bg-transparent border-2 border-white px-6 py-3 rounded-lg font-semibold hover:bg-white hover:text-purple-600 transition">
+                        <i class="fas fa-play-circle mr-2"></i>Демо
+                    </a>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- Статус системы -->
+    <section class="container mx-auto px-4 py-12">
+        <div class="bg-white rounded-xl shadow-lg p-6">
+            <h2 class="text-2xl font-bold mb-6 text-center">Статус системы</h2>
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-6" id="system-status">
+                <!-- Динамически загрузится -->
+                <div class="text-center p-4">
+                    <div class="loader mx-auto mb-2"></div>
+                    <p>Проверка...</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Возможности -->
+    <section id="features" class="container mx-auto px-4 py-12">
+        <h2 class="text-3xl font-bold text-center mb-12">Что умеет система</h2>
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
+            <div class="card-hover bg-white rounded-xl shadow-lg p-6">
+                <div class="text-blue-500 text-4xl mb-4">
+                    <i class="fas fa-robot"></i>
+                </div>
+                <h3 class="text-xl font-bold mb-3">Автоматические сценарии</h3>
+                <p class="text-gray-600">Создавайте сложные сценарии публикаций с задержками между сообщениями</p>
+            </div>
+            <div class="card-hover bg-white rounded-xl shadow-lg p-6">
+                <div class="text-green-500 text-4xl mb-4">
+                    <i class="fas fa-user-shield"></i>
+                </div>
+                <h3 class="text-xl font-bold mb-3">Безопасные сессии</h3>
+                <p class="text-gray-600">Хранение Telegram сессий в зашифрованном виде с защитой от взлома</p>
+            </div>
+            <div class="card-hover bg-white rounded-xl shadow-lg p-6">
+                <div class="text-purple-500 text-4xl mb-4">
+                    <i class="fas fa-chart-line"></i>
+                </div>
+                <h3 class="text-xl font-bold mb-3">Подробная статистика</h3>
+                <p class="text-gray-600">Отслеживайте эффективность рассылок и активность пользователей</p>
+            </div>
+        </div>
+    </section>
+
+    <!-- Как начать -->
+    <section class="bg-gray-100 py-16">
+        <div class="container mx-auto px-4">
+            <h2 class="text-3xl font-bold text-center mb-12">Как начать работу</h2>
+            <div class="max-w-3xl mx-auto bg-white rounded-xl shadow-lg p-8">
+                <ol class="space-y-6">
+                    <li class="flex items-start">
+                        <div class="bg-blue-100 text-blue-600 rounded-full w-8 h-8 flex items-center justify-center mr-4 flex-shrink-0">
+                            <span class="font-bold">1</span>
+                        </div>
+                        <div>
+                            <h4 class="font-bold text-lg">Зарегистрируйтесь в системе</h4>
+                            <p class="text-gray-600">Создайте аккаунт и получите тестовый период</p>
+                        </div>
+                    </li>
+                    <li class="flex items-start">
+                        <div class="bg-green-100 text-green-600 rounded-full w-8 h-8 flex items-center justify-center mr-4 flex-shrink-0">
+                            <span class="font-bold">2</span>
+                        </div>
+                        <div>
+                            <h4 class="font-bold text-lg">Добавьте Telegram аккаунт</h4>
+                            <p class="text-gray-600">Авторизуйте свой Telegram для безопасного доступа</p>
+                        </div>
+                    </li>
+                    <li class="flex items-start">
+                        <div class="bg-purple-100 text-purple-600 rounded-full w-8 h-8 flex items-center justify-center mr-4 flex-shrink-0">
+                            <span class="font-bold">3</span>
+                        </div>
+                        <div>
+                            <h4 class="font-bold text-lg">Создайте первый сценарий</h4>
+                            <p class="text-gray-600">Настройте последовательность сообщений и задержки</p>
+                        </div>
+                    </li>
+                    <li class="flex items-start">
+                        <div class="bg-yellow-100 text-yellow-600 rounded-full w-8 h-8 flex items-center justify-center mr-4 flex-shrink-0">
+                            <span class="font-bold">4</span>
+                        </div>
+                        <div>
+                            <h4 class="font-bold text-lg">Запустите рассылку</h4>
+                            <p class="text-gray-600">Выберите группу/канал и запустите автоматическую публикацию</p>
+                        </div>
+                    </li>
+                </ol>
+            </div>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer class="bg-gray-800 text-white py-8">
+        <div class="container mx-auto px-4">
+            <div class="flex flex-col md:flex-row justify-between items-center">
+                <div class="mb-4 md:mb-0">
+                    <div class="flex items-center mb-2">
+                        <i class="fab fa-telegram text-blue-400 text-2xl mr-2"></i>
+                        <span class="text-xl font-bold">Telegram AutoPosting</span>
+                    </div>
+                    <p class="text-gray-400">© 2024 Все права защищены</p>
+                </div>
+                <div class="flex space-x-6">
+                    <a href="#" class="text-gray-300 hover:text-white transition">
+                        <i class="fab fa-github text-xl"></i>
+                    </a>
+                    <a href="#" class="text-gray-300 hover:text-white transition">
+                        <i class="fab fa-telegram text-xl"></i>
+                    </a>
+                    <a href="#" class="text-gray-300 hover:text-white transition">
+                        <i class="fas fa-envelope text-xl"></i>
+                    </a>
+                </div>
+            </div>
+        </div>
+    </footer>
+
+    <!-- JavaScript -->
+    <script src="/js/api.js"></script>
+    <script src="/js/auth.js"></script>
+    <script src="/js/app.js"></script>
+    <script>
+        // Инициализация при загрузке страницы
+        document.addEventListener('DOMContentLoaded', () => {
+            initApp();
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,342 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Вход / Регистрация - Telegram AutoPosting</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        .gradient-bg {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        }
+        .card {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+        }
+    </style>
+</head>
+<body class="gradient-bg min-h-screen flex items-center justify-center p-4">
+    <div class="max-w-md w-full">
+        <!-- Логотип и заголовок -->
+        <div class="text-center mb-8">
+            <div class="inline-block bg-white p-4 rounded-full shadow-lg mb-4">
+                <i class="fab fa-telegram text-blue-500 text-4xl"></i>
+            </div>
+            <h1 class="text-3xl font-bold text-white">Telegram AutoPosting</h1>
+            <p class="text-blue-100 mt-2">Автоматизация публикаций в Telegram</p>
+        </div>
+
+        <!-- Контейнер формы -->
+        <div class="card rounded-2xl shadow-2xl p-8">
+            <!-- Вкладки -->
+            <div class="flex mb-8 border-b">
+                <button id="tab-login" class="flex-1 py-3 text-center font-semibold text-blue-600 border-b-2 border-blue-600">
+                    <i class="fas fa-sign-in-alt mr-2"></i>Вход
+                </button>
+                <button id="tab-register" class="flex-1 py-3 text-center font-semibold text-gray-500">
+                    <i class="fas fa-user-plus mr-2"></i>Регистрация
+                </button>
+            </div>
+
+            <!-- Форма входа -->
+            <div id="login-form" class="space-y-6">
+                <div>
+                    <label class="block text-gray-700 text-sm font-medium mb-2">
+                        <i class="fas fa-user mr-2"></i>Логин
+                    </label>
+                    <input type="text" id="login-username" 
+                           class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                           placeholder="Введите логин">
+                </div>
+
+                <div>
+                    <label class="block text-gray-700 text-sm font-medium mb-2">
+                        <i class="fas fa-lock mr-2"></i>Пароль
+                    </label>
+                    <input type="password" id="login-password" 
+                           class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                           placeholder="Введите пароль">
+                </div>
+
+                <div class="flex items-center justify-between">
+                    <div class="flex items-center">
+                        <input type="checkbox" id="remember" class="h-4 w-4 text-blue-600 rounded">
+                        <label for="remember" class="ml-2 text-sm text-gray-600">Запомнить меня</label>
+                    </div>
+                    <a href="#" class="text-sm text-blue-600 hover:text-blue-800">Забыли пароль?</a>
+                </div>
+
+                <button id="login-button" 
+                        class="w-full bg-blue-600 text-white py-3 rounded-lg font-semibold hover:bg-blue-700 transition duration-300">
+                    <i class="fas fa-sign-in-alt mr-2"></i>Войти в систему
+                </button>
+
+                <div class="text-center">
+                    <p class="text-gray-600 text-sm">Нет аккаунта? 
+                        <button class="text-blue-600 font-medium switch-to-register">Зарегистрируйтесь</button>
+                    </p>
+                </div>
+            </div>
+
+            <!-- Форма регистрации -->
+            <div id="register-form" class="space-y-6 hidden">
+                <div>
+                    <label class="block text-gray-700 text-sm font-medium mb-2">
+                        <i class="fas fa-user mr-2"></i>Логин *
+                    </label>
+                    <input type="text" id="register-username" 
+                           class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                           placeholder="Придумайте логин" required>
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-gray-700 text-sm font-medium mb-2">
+                            <i class="fas fa-lock mr-2"></i>Пароль *
+                        </label>
+                        <input type="password" id="register-password" 
+                               class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                               placeholder="Не менее 6 символов" required>
+                    </div>
+                    <div>
+                        <label class="block text-gray-700 text-sm font-medium mb-2">
+                            <i class="fas fa-lock mr-2"></i>Повторите пароль *
+                        </label>
+                        <input type="password" id="register-password2" 
+                               class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                               placeholder="Повторите пароль" required>
+                    </div>
+                </div>
+
+                <div>
+                    <label class="block text-gray-700 text-sm font-medium mb-2">
+                        <i class="fas fa-envelope mr-2"></i>Email (необязательно)
+                    </label>
+                    <input type="email" id="register-email" 
+                           class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                           placeholder="email@example.com">
+                </div>
+
+                <div>
+                    <label class="block text-gray-700 text-sm font-medium mb-2">
+                        <i class="fab fa-telegram mr-2"></i>Telegram контакт
+                    </label>
+                    <input type="text" id="register-telegram" 
+                           class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                           placeholder="@username или +79991234567">
+                </div>
+
+                <div class="flex items-center">
+                    <input type="checkbox" id="terms" class="h-4 w-4 text-blue-600 rounded" required>
+                    <label for="terms" class="ml-2 text-sm text-gray-600">
+                        Я согласен с 
+                        <a href="#" class="text-blue-600 hover:text-blue-800">правилами использования</a>
+                    </label>
+                </div>
+
+                <button id="register-button" 
+                        class="w-full bg-green-600 text-white py-3 rounded-lg font-semibold hover:bg-green-700 transition duration-300">
+                    <i class="fas fa-user-plus mr-2"></i>Создать аккаунт
+                </button>
+
+                <div class="text-center">
+                    <p class="text-gray-600 text-sm">Уже есть аккаунт? 
+                        <button class="text-blue-600 font-medium switch-to-login">Войдите</button>
+                    </p>
+                </div>
+            </div>
+
+            <!-- Уведомления -->
+            <div id="notification" class="mt-6 hidden p-4 rounded-lg"></div>
+        </div>
+
+        <!-- Ссылка на главную -->
+        <div class="text-center mt-6">
+            <a href="/" class="text-white hover:text-blue-200 transition">
+                <i class="fas fa-arrow-left mr-2"></i>Вернуться на главную
+            </a>
+        </div>
+    </div>
+
+    <!-- JavaScript -->
+    <script src="/js/api.js"></script>
+    <script src="/js/auth.js"></script>
+    <script>
+        // Переключение между вкладками
+        document.getElementById('tab-login').addEventListener('click', () => {
+            showLoginForm();
+        });
+        
+        document.getElementById('tab-register').addEventListener('click', () => {
+            showRegisterForm();
+        });
+        
+        document.querySelectorAll('.switch-to-register').forEach(btn => {
+            btn.addEventListener('click', showRegisterForm);
+        });
+        
+        document.querySelectorAll('.switch-to-login').forEach(btn => {
+            btn.addEventListener('click', showLoginForm);
+        });
+
+        function showLoginForm() {
+            document.getElementById('login-form').classList.remove('hidden');
+            document.getElementById('register-form').classList.add('hidden');
+            document.getElementById('tab-login').classList.add('text-blue-600', 'border-blue-600');
+            document.getElementById('tab-login').classList.remove('text-gray-500');
+            document.getElementById('tab-register').classList.remove('text-blue-600', 'border-blue-600');
+            document.getElementById('tab-register').classList.add('text-gray-500');
+        }
+
+        function showRegisterForm() {
+            document.getElementById('register-form').classList.remove('hidden');
+            document.getElementById('login-form').classList.add('hidden');
+            document.getElementById('tab-register').classList.add('text-blue-600', 'border-blue-600');
+            document.getElementById('tab-register').classList.remove('text-gray-500');
+            document.getElementById('tab-login').classList.remove('text-blue-600', 'border-blue-600');
+            document.getElementById('tab-login').classList.add('text-gray-500');
+        }
+
+        // Обработка входа
+        document.getElementById('login-button').addEventListener('click', async () => {
+            const username = document.getElementById('login-username').value.trim();
+            const password = document.getElementById('login-password').value;
+            
+            if (!username || !password) {
+                showNotification('Заполните все поля', 'error');
+                return;
+            }
+            
+            const button = document.getElementById('login-button');
+            const originalText = button.innerHTML;
+            button.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>Вход...';
+            button.disabled = true;
+            
+            try {
+                const result = await api.login(username, password);
+                
+                if (result && result.token) {
+                    showNotification('Вход выполнен успешно!', 'success');
+                    
+                    // Редирект через 1 секунду
+                    setTimeout(() => {
+                        if (result.user && result.user.is_admin) {
+                            window.location.href = '/admin.html';
+                        } else {
+                            window.location.href = '/dashboard.html';
+                        }
+                    }, 1000);
+                } else {
+                    showNotification(result?.message || 'Неверный логин или пароль', 'error');
+                }
+            } catch (error) {
+                showNotification('Ошибка подключения к серверу', 'error');
+            } finally {
+                button.innerHTML = originalText;
+                button.disabled = false;
+            }
+        });
+
+        // Обработка регистрации
+        document.getElementById('register-button').addEventListener('click', async () => {
+            const username = document.getElementById('register-username').value.trim();
+            const password = document.getElementById('register-password').value;
+            const password2 = document.getElementById('register-password2').value;
+            const email = document.getElementById('register-email').value.trim();
+            const telegram = document.getElementById('register-telegram').value.trim();
+            const terms = document.getElementById('terms').checked;
+            
+            // Валидация
+            if (!username || !password) {
+                showNotification('Заполните обязательные поля', 'error');
+                return;
+            }
+            
+            if (password.length < 6) {
+                showNotification('Пароль должен быть не менее 6 символов', 'error');
+                return;
+            }
+            
+            if (password !== password2) {
+                showNotification('Пароли не совпадают', 'error');
+                return;
+            }
+            
+            if (!terms) {
+                showNotification('Примите правила использования', 'error');
+                return;
+            }
+            
+            const button = document.getElementById('register-button');
+            const originalText = button.innerHTML;
+            button.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>Регистрация...';
+            button.disabled = true;
+            
+            try {
+                const result = await api.register(username, password, email, telegram);
+                
+                if (result && result.token) {
+                    showNotification('Регистрация успешна! Выполняется вход...', 'success');
+                    
+                    // Автоматический вход
+                    setTimeout(() => {
+                        window.location.href = '/dashboard.html';
+                    }, 1500);
+                } else {
+                    showNotification(result?.detail || 'Ошибка регистрации', 'error');
+                }
+            } catch (error) {
+                showNotification('Ошибка подключения к серверу', 'error');
+            } finally {
+                button.innerHTML = originalText;
+                button.disabled = false;
+            }
+        });
+
+        // Показать уведомление
+        function showNotification(message, type = 'info') {
+            const notification = document.getElementById('notification');
+            const colors = {
+                success: 'bg-green-100 text-green-800 border-green-200',
+                error: 'bg-red-100 text-red-800 border-red-200',
+                info: 'bg-blue-100 text-blue-800 border-blue-200'
+            };
+            
+            notification.className = `mt-6 p-4 rounded-lg border ${colors[type]}`;
+            notification.innerHTML = `
+                <div class="flex items-center">
+                    <i class="fas fa-${type === 'success' ? 'check-circle' : type === 'error' ? 'exclamation-circle' : 'info-circle'} mr-3"></i>
+                    <span>${message}</span>
+                </div>
+            `;
+            notification.classList.remove('hidden');
+            
+            // Автоскрытие для success/info
+            if (type !== 'error') {
+                setTimeout(() => {
+                    notification.classList.add('hidden');
+                }, 5000);
+            }
+        }
+
+        // Проверка авторизации при загрузке
+        document.addEventListener('DOMContentLoaded', () => {
+            if (api.isAuthenticated()) {
+                // Если уже авторизован, редирект
+                if (api.isAdmin()) {
+                    window.location.href = '/admin.html';
+                } else {
+                    window.location.href = '/dashboard.html';
+                }
+            }
+            
+            // Проверка параметров URL
+            const urlParams = new URLSearchParams(window.location.search);
+            if (urlParams.get('register') === 'true') {
+                showRegisterForm();
+            }
+        });
+    </script>
+</body>
+</html>

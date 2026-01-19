@@ -1,0 +1,244 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Админ-панель - Telegram AutoPosting</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body class="bg-gray-100">
+    <!-- Навигация -->
+    <nav class="bg-gray-800 text-white shadow-lg">
+        <div class="container mx-auto px-4">
+            <div class="flex justify-between items-center py-4">
+                <div class="flex items-center space-x-3">
+                    <i class="fab fa-telegram text-blue-400 text-2xl"></i>
+                    <span class="text-xl font-bold">Telegram AutoPosting</span>
+                    <span class="bg-red-600 text-white text-xs px-2 py-1 rounded">Админ</span>
+                </div>
+                <div class="flex items-center space-x-4">
+                    <span id="admin-name"></span>
+                    <button onclick="logout()" class="text-gray-300 hover:text-white">
+                        <i class="fas fa-sign-out-alt mr-1"></i>Выйти
+                    </button>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container mx-auto px-4 py-6">
+        <div class="flex flex-col lg:flex-row gap-6">
+            <!-- Боковая панель -->
+            <div class="lg:w-1/4">
+                <div class="bg-white rounded-xl shadow p-6 mb-6">
+                    <div class="text-center mb-6">
+                        <div class="w-20 h-20 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-3">
+                            <i class="fas fa-user-shield text-blue-600 text-3xl"></i>
+                        </div>
+                        <h3 id="admin-username" class="font-bold text-lg"></h3>
+                        <p class="text-gray-500 text-sm">Администратор системы</p>
+                    </div>
+                    
+                    <nav class="space-y-2">
+                        <button onclick="loadAdminSection('dashboard')" class="admin-menu-item active">
+                            <i class="fas fa-tachometer-alt mr-3"></i>Дашборд
+                        </button>
+                        <button onclick="loadAdminSection('users')" class="admin-menu-item">
+                            <i class="fas fa-users mr-3"></i>Пользователи
+                        </button>
+                        <button onclick="loadAdminSection('subscriptions')" class="admin-menu-item">
+                            <i class="fas fa-crown mr-3"></i>Подписки
+                        </button>
+                        <button onclick="loadAdminSection('campaigns')" class="admin-menu-item">
+                            <i class="fas fa-paper-plane mr-3"></i>Рассылки
+                        </button>
+                        <button onclick="loadAdminSection('system')" class="admin-menu-item">
+                            <i class="fas fa-cogs mr-3"></i>Система
+                        </button>
+                        <button onclick="loadAdminSection('logs')" class="admin-menu-item">
+                            <i class="fas fa-clipboard-list mr-3"></i>Логи
+                        </button>
+                    </nav>
+                    
+                    <div class="mt-8 pt-6 border-t border-gray-200">
+                        <div class="text-sm text-gray-500 mb-2">Статус системы</div>
+                        <div id="system-status-badge" class="bg-green-100 text-green-800 text-xs px-3 py-1 rounded-full inline-block">
+                            <i class="fas fa-circle mr-1"></i>Online
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Быстрая статистика -->
+                <div class="bg-white rounded-xl shadow p-6">
+                    <h4 class="font-bold mb-4">Быстрая статистика</h4>
+                    <div class="space-y-4">
+                        <div class="flex justify-between items-center">
+                            <span class="text-gray-600">Пользователи сегодня:</span>
+                            <span class="font-bold" id="stats-today-users">0</span>
+                        </div>
+                        <div class="flex justify-between items-center">
+                            <span class="text-gray-600">Новые подписки:</span>
+                            <span class="font-bold" id="stats-new-subs">0</span>
+                        </div>
+                        <div class="flex justify-between items-center">
+                            <span class="text-gray-600">Запусков сегодня:</span>
+                            <span class="font-bold" id="stats-today-campaigns">0</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Основной контент -->
+            <div class="lg:w-3/4">
+                <div class="bg-white rounded-xl shadow p-6">
+                    <div id="admin-content">
+                        <div class="text-center py-12">
+                            <div class="loader mx-auto mb-4"></div>
+                            <p>Загрузка админ-панели...</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Модальные окна -->
+    <div id="admin-modal" class="fixed inset-0 bg-black bg-opacity-50 hidden items-center justify-center z-50 p-4">
+        <div class="bg-white rounded-xl shadow-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+            <div class="p-6">
+                <div class="flex justify-between items-center mb-6">
+                    <h3 id="admin-modal-title" class="text-xl font-bold"></h3>
+                    <button onclick="closeAdminModal()" class="text-gray-400 hover:text-gray-600">
+                        <i class="fas fa-times text-xl"></i>
+                    </button>
+                </div>
+                <div id="admin-modal-content"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- JavaScript -->
+    <script src="/js/api.js"></script>
+    <script src="/js/admin.js"></script>
+    <style>
+        .admin-menu-item {
+            display: flex;
+            align-items: center;
+            width: 100%;
+            padding: 12px 16px;
+            border-radius: 8px;
+            text-align: left;
+            background: transparent;
+            border: none;
+            color: #4B5563;
+            transition: all 0.3s;
+        }
+        .admin-menu-item:hover {
+            background-color: #F3F4F6;
+            color: #111827;
+        }
+        .admin-menu-item.active {
+            background-color: #3B82F6;
+            color: white;
+        }
+        .loader {
+            border: 3px solid #f3f3f3;
+            border-top: 3px solid #3B82F6;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+    </style>
+    <script>
+        document.addEventListener('DOMContentLoaded', async () => {
+            // Проверка авторизации и прав
+            if (!api.isAuthenticated() || !api.isAdmin()) {
+                window.location.href = '/login.html';
+                return;
+            }
+            
+            // Обновляем информацию
+            document.getElementById('admin-name').textContent = api.user.username;
+            document.getElementById('admin-username').textContent = api.user.username;
+            
+            // Загружаем админ-панель
+            loadAdminSection('dashboard');
+            
+            // Загружаем статистику
+            loadAdminStats();
+        });
+        
+        function loadAdminSection(section) {
+            // Обновляем активную кнопку
+            document.querySelectorAll('.admin-menu-item').forEach(btn => {
+                btn.classList.remove('active');
+            });
+            event.target.classList.add('active');
+            
+            // Загружаем секцию
+            switch(section) {
+                case 'dashboard':
+                    loadAdminDashboard();
+                    break;
+                case 'users':
+                    loadAdminUsers();
+                    break;
+                case 'subscriptions':
+                    loadAdminSubscriptions();
+                    break;
+                case 'campaigns':
+                    loadAdminCampaigns();
+                    break;
+                case 'system':
+                    loadAdminSystem();
+                    break;
+                case 'logs':
+                    loadAdminLogs();
+                    break;
+            }
+        }
+        
+        async function loadAdminStats() {
+            try {
+                // Заглушка - здесь должен быть API запрос к /api/admin/stats
+                document.getElementById('stats-today-users').textContent = '5';
+                document.getElementById('stats-new-subs').textContent = '3';
+                document.getElementById('stats-today-campaigns').textContent = '12';
+            } catch (error) {
+                console.error('Ошибка загрузки статистики:', error);
+            }
+        }
+        
+        function openAdminModal(title, content) {
+            document.getElementById('admin-modal-title').textContent = title;
+            document.getElementById('admin-modal-content').innerHTML = content;
+            document.getElementById('admin-modal').classList.remove('hidden');
+            document.body.classList.add('overflow-hidden');
+        }
+        
+        function closeAdminModal() {
+            document.getElementById('admin-modal').classList.add('hidden');
+            document.body.classList.remove('overflow-hidden');
+        }
+        
+        function logout() {
+            if (confirm('Вы уверены, что хотите выйти?')) {
+                api.logout();
+                window.location.href = '/index.html';
+            }
+        }
+        
+        // Экспортируем функции
+        window.loadAdminSection = loadAdminSection;
+        window.openAdminModal = openAdminModal;
+        window.closeAdminModal = closeAdminModal;
+        window.logout = logout;
+    </script>
+</body>
+</html>

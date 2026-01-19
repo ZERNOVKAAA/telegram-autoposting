@@ -1,0 +1,260 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Личный кабинет - Telegram AutoPosting</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        .sidebar {
+            width: 250px;
+            min-height: calc(100vh - 4rem);
+        }
+        .content {
+            margin-left: 250px;
+        }
+        @media (max-width: 768px) {
+            .sidebar {
+                width: 100%;
+                min-height: auto;
+            }
+            .content {
+                margin-left: 0;
+            }
+        }
+    </style>
+</head>
+<body class="bg-gray-50">
+    <!-- Навигация -->
+    <nav class="bg-white shadow-md">
+        <div class="container mx-auto px-4 py-3">
+            <div class="flex justify-between items-center">
+                <div class="flex items-center space-x-4">
+                    <i class="fab fa-telegram text-blue-500 text-2xl"></i>
+                    <span class="text-xl font-bold">Telegram AutoPosting</span>
+                    <span class="bg-blue-100 text-blue-800 text-xs px-2 py-1 rounded">Личный кабинет</span>
+                </div>
+                <div class="flex items-center space-x-4">
+                    <span id="user-name" class="text-gray-700"></span>
+                    <button onclick="logout()" class="text-gray-600 hover:text-gray-800">
+                        <i class="fas fa-sign-out-alt mr-1"></i>Выйти
+                    </button>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <div class="flex">
+        <!-- Боковая панель -->
+        <div class="sidebar bg-gray-800 text-white">
+            <div class="p-6">
+                <div class="text-center mb-8">
+                    <div class="w-16 h-16 bg-blue-500 rounded-full flex items-center justify-center mx-auto mb-3">
+                        <i class="fas fa-user text-2xl"></i>
+                    </div>
+                    <h3 id="sidebar-username" class="font-bold"></h3>
+                    <div id="subscription-status" class="mt-2 text-sm">
+                        <!-- Статус подписки -->
+                    </div>
+                </div>
+
+                <nav class="space-y-2">
+                    <a href="#dashboard" class="menu-item active">
+                        <i class="fas fa-tachometer-alt mr-3"></i>Дашборд
+                    </a>
+                    <a href="#accounts" class="menu-item">
+                        <i class="fab fa-telegram mr-3"></i>Telegram аккаунты
+                    </a>
+                    <a href="#scenarios" class="menu-item">
+                        <i class="fas fa-code mr-3"></i>Сценарии
+                    </a>
+                    <a href="#campaigns" class="menu-item">
+                        <i class="fas fa-paper-plane mr-3"></i>Рассылки
+                    </a>
+                    <a href="#stats" class="menu-item">
+                        <i class="fas fa-chart-bar mr-3"></i>Статистика
+                    </a>
+                    <a href="#settings" class="menu-item">
+                        <i class="fas fa-cog mr-3"></i>Настройки
+                    </a>
+                </nav>
+            </div>
+        </div>
+
+        <!-- Основной контент -->
+        <div class="content flex-1 p-6">
+            <!-- Динамический контент -->
+            <div id="content-area">
+                <div class="text-center py-12">
+                    <div class="loader mx-auto mb-4"></div>
+                    <p>Загрузка...</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Модальное окно (скрытое) -->
+    <div id="modal" class="fixed inset-0 bg-black bg-opacity-50 hidden items-center justify-center z-50 p-4">
+        <div class="bg-white rounded-xl shadow-2xl max-w-lg w-full max-h-[90vh] overflow-y-auto">
+            <div class="p-6">
+                <div class="flex justify-between items-center mb-6">
+                    <h3 id="modal-title" class="text-xl font-bold"></h3>
+                    <button onclick="closeModal()" class="text-gray-400 hover:text-gray-600">
+                        <i class="fas fa-times text-xl"></i>
+                    </button>
+                </div>
+                <div id="modal-content"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- JavaScript -->
+    <script src="/js/api.js"></script>
+    <script src="/js/dashboard.js"></script>
+    <style>
+        .menu-item {
+            display: flex;
+            align-items: center;
+            padding: 12px 16px;
+            border-radius: 8px;
+            transition: all 0.3s;
+        }
+        .menu-item:hover {
+            background-color: rgba(255, 255, 255, 0.1);
+        }
+        .menu-item.active {
+            background-color: #3B82F6;
+        }
+        .loader {
+            border: 3px solid #f3f3f3;
+            border-top: 3px solid #3B82F6;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+    </style>
+    <script>
+        // Инициализация при загрузке
+        document.addEventListener('DOMContentLoaded', async () => {
+            // Проверка авторизации
+            if (!api.isAuthenticated()) {
+                window.location.href = '/login.html';
+                return;
+            }
+            
+            // Обновляем информацию о пользователе
+            document.getElementById('user-name').textContent = api.user.username;
+            document.getElementById('sidebar-username').textContent = api.user.username;
+            
+            // Проверяем подписку
+            await updateSubscriptionStatus();
+            
+            // Загружаем дашборд
+            loadDashboard();
+            
+            // Настройка навигации
+            setupNavigation();
+        });
+        
+        function setupNavigation() {
+            document.querySelectorAll('.menu-item').forEach(item => {
+                item.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    
+                    // Убираем активный класс у всех
+                    document.querySelectorAll('.menu-item').forEach(i => {
+                        i.classList.remove('active');
+                    });
+                    
+                    // Добавляем активный класс текущему
+                    this.classList.add('active');
+                    
+                    // Загружаем соответствующий раздел
+                    const section = this.getAttribute('href').substring(1);
+                    loadSection(section);
+                });
+            });
+        }
+        
+        async function loadSection(section) {
+            const contentArea = document.getElementById('content-area');
+            
+            switch(section) {
+                case 'dashboard':
+                    loadDashboard();
+                    break;
+                case 'accounts':
+                    loadTelegramAccounts();
+                    break;
+                case 'scenarios':
+                    loadScenarios();
+                    break;
+                case 'campaigns':
+                    loadCampaigns();
+                    break;
+                case 'stats':
+                    loadStats();
+                    break;
+                case 'settings':
+                    loadSettings();
+                    break;
+            }
+        }
+        
+        async function updateSubscriptionStatus() {
+            try {
+                const subscription = await api.checkSubscription();
+                const statusDiv = document.getElementById('subscription-status');
+                
+                if (subscription && subscription.has_subscription) {
+                    statusDiv.innerHTML = `
+                        <div class="bg-green-900 text-green-100 px-3 py-1 rounded-full text-xs">
+                            <i class="fas fa-crown mr-1"></i>Подписка активна
+                        </div>
+                        <p class="text-xs mt-1">Осталось: ${subscription.subscription.days_left} дней</p>
+                    `;
+                } else {
+                    statusDiv.innerHTML = `
+                        <div class="bg-red-900 text-red-100 px-3 py-1 rounded-full text-xs">
+                            <i class="fas fa-exclamation-circle mr-1"></i>Нет подписки
+                        </div>
+                        <p class="text-xs mt-1">Обратитесь к администратору</p>
+                    `;
+                }
+            } catch (error) {
+                console.error('Ошибка проверки подписки:', error);
+            }
+        }
+        
+        function openModal(title, content) {
+            document.getElementById('modal-title').textContent = title;
+            document.getElementById('modal-content').innerHTML = content;
+            document.getElementById('modal').classList.remove('hidden');
+            document.body.classList.add('overflow-hidden');
+        }
+        
+        function closeModal() {
+            document.getElementById('modal').classList.add('hidden');
+            document.body.classList.remove('overflow-hidden');
+        }
+        
+        function logout() {
+            if (confirm('Вы уверены, что хотите выйти?')) {
+                api.logout();
+                window.location.href = '/index.html';
+            }
+        }
+        
+        // Делаем функции доступными глобально
+        window.openModal = openModal;
+        window.closeModal = closeModal;
+        window.logout = logout;
+    </script>
+</body>
+</html>
